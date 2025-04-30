@@ -1,0 +1,30 @@
+2025-01-26 10:20:39,011 INFO: Logging is set up.
+2025-01-26 10:20:40,300 INFO: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.101.3:5000
+2025-01-26 10:20:40,305 INFO: [33mPress CTRL+C to quit[0m
+2025-01-26 10:20:40,307 INFO:  * Restarting with stat
+2025-01-26 10:20:40,807 INFO: Logging is set up.
+2025-01-26 10:20:40,816 WARNING:  * Debugger is active!
+2025-01-26 10:20:40,819 INFO:  * Debugger PIN: 798-314-292
+2025-01-26 10:20:44,771 INFO: 127.0.0.1 - - [26/Jan/2025 10:20:44] "POST /api/auth/login HTTP/1.1" 200 -
+2025-01-26 10:22:11,473 INFO: 127.0.0.1 - - [26/Jan/2025 10:22:11] "[33mPOST /api/transaction/expense HTTP/1.1[0m" 404 -
+2025-01-26 10:22:22,179 INFO: 127.0.0.1 - - [26/Jan/2025 10:22:22] "[33mPOST /api/transaction/expense HTTP/1.1[0m" 404 -
+2025-01-26 10:22:52,262 INFO: 127.0.0.1 - - [26/Jan/2025 10:22:52] "[33mPOST /api/transaction/expense HTTP/1.1[0m" 404 -
+2025-01-26 10:24:57,026 INFO: 127.0.0.1 - - [26/Jan/2025 10:24:57] "[33mGET /api/transaction HTTP/1.1[0m" 404 -
+2025-01-26 10:24:57,994 INFO: 127.0.0.1 - - [26/Jan/2025 10:24:57] "[33mGET /api/transaction HTTP/1.1[0m" 404 -
+2025-01-26 10:24:58,772 INFO: 127.0.0.1 - - [26/Jan/2025 10:24:58] "[33mGET /api/transaction HTTP/1.1[0m" 404 -
+2025-01-26 10:24:59,220 INFO: 127.0.0.1 - - [26/Jan/2025 10:24:59] "[33mGET /api/transaction HTTP/1.1[0m" 404 -
+2025-01-26 10:25:07,566 INFO:  * Detected change in 'C:\\projects\\SmartSaveApp\\backend\\models\\transaction.py', reloading
+2025-01-26 10:25:07,701 INFO:  * Restarting with stat
+2025-01-26 10:25:08,373 INFO: Logging is set up.
+2025-01-26 10:25:08,380 WARNING:  * Debugger is active!
+2025-01-26 10:25:08,383 INFO:  * Debugger PIN: 798-314-292
+2025-01-26 10:25:12,402 INFO:  * Detected change in 'C:\\projects\\SmartSaveApp\\backend\\routes\\transaction_routes.py', reloading
+2025-01-26 10:25:12,481 INFO:  * Restarting with stat
+2025-01-26 10:25:13,008 INFO: Logging is set up.
+2025-01-26 10:25:13,014 WARNING:  * Debugger is active!
+2025-01-26 10:25:13,016 INFO:  * Debugger PIN: 798-314-292
+2025-01-26 10:25:17,032 INFO:  * Detected change in 'C:\\projects\\SmartSaveApp\\backend\\app.py', reloading
+2025-01-26 10:25:17,106 INFO:  * Restarting with stat

@@ -1,0 +1,79 @@
+2025-04-20 22:07:24,089 - WARNING -  * Debugger is active!
+2025-04-20 22:07:24,093 - INFO -  * Debugger PIN: 798-314-292
+2025-04-20 22:07:26,678 - INFO - 127.0.0.1 - - [20/Apr/2025 22:07:26] "OPTIONS /api/admin/users HTTP/1.1" 200 -
+2025-04-20 22:07:26,679 - INFO - 127.0.0.1 - - [20/Apr/2025 22:07:26] "OPTIONS /api/transactions/all HTTP/1.1" 200 -
+2025-04-20 22:07:26,680 - INFO - 127.0.0.1 - - [20/Apr/2025 22:07:26] "OPTIONS /api/transactions/overview HTTP/1.1" 200 -
+2025-04-20 22:07:26,683 - INFO - 127.0.0.1 - - [20/Apr/2025 22:07:26] "OPTIONS /api/transactions/recent HTTP/1.1" 200 -
+2025-04-20 22:07:26,689 - INFO - 127.0.0.1 - - [20/Apr/2025 22:07:26] "OPTIONS /api/admin/users HTTP/1.1" 200 -
+2025-04-20 22:07:26,692 - INFO - 127.0.0.1 - - [20/Apr/2025 22:07:26] "OPTIONS /api/transactions/all HTTP/1.1" 200 -
+2025-04-20 22:07:26,997 - INFO - 127.0.0.1 - - [20/Apr/2025 22:07:26] "OPTIONS /api/transactions/overview HTTP/1.1" 200 -
+2025-04-20 22:07:26,999 - INFO - 127.0.0.1 - - [20/Apr/2025 22:07:26] "OPTIONS /api/transactions/recent HTTP/1.1" 200 -
+2025-04-20 22:07:27,039 - DEBUG - Starting /transactions/overview endpoint
+2025-04-20 22:07:27,040 - ERROR - Database connection failed: Textual SQL expression 'SELECT 1' should be explicitly declared as text('SELECT 1')
+Traceback (most recent call last):
+  File "C:\projects\SmartSaveApp\backend\routes\transaction_routes.py", line 253, in get_transaction_overview
+    db.session.execute("SELECT 1")
+  File "C:\Users\ACER\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\orm\scoping.py", line 778, in execute
+    return self._proxied.execute(
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ACER\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\orm\session.py", line 2362, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ACER\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\orm\session.py", line 2145, in _execute_internal
+    statement = coercions.expect(roles.StatementRole, statement)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ACER\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\sql\coercions.py", line 395, in expect
+    resolved = impl._literal_coercion(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ACER\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\sql\coercions.py", line 621, in _literal_coercion
+    return self._text_coercion(element, argname, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ACER\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\sql\coercions.py", line 614, in _text_coercion
+    return _no_text_coercion(element, argname)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ACER\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\sql\coercions.py", line 584, in _no_text_coercion
+    raise exc_cls(
+sqlalchemy.exc.ArgumentError: Textual SQL expression 'SELECT 1' should be explicitly declared as text('SELECT 1')
+2025-04-20 22:07:27,042 - DEBUG - Starting /transactions/all endpoint
+2025-04-20 22:07:27,048 - INFO - 127.0.0.1 - - [20/Apr/2025 22:07:27] "GET /api/admin/users HTTP/1.1" 200 -
+2025-04-20 22:07:27,052 - DEBUG - Starting /transactions/recent endpoint
+2025-04-20 22:07:27,065 - INFO - 127.0.0.1 - - [20/Apr/2025 22:07:27] "[35m[1mGET /api/transactions/overview HTTP/1.1[0m" 500 -
+2025-04-20 22:07:27,077 - DEBUG - Fetched recent activities: 10 transactions, 10 users, 5 flagged
+2025-04-20 22:07:27,080 - DEBUG - Fetched 146 admin transactions
+2025-04-20 22:07:27,084 - INFO - 127.0.0.1 - - [20/Apr/2025 22:07:27] "GET /api/transactions/recent HTTP/1.1" 200 -
+2025-04-20 22:07:27,084 - INFO - 127.0.0.1 - - [20/Apr/2025 22:07:27] "GET /api/transactions/all HTTP/1.1" 200 -
+2025-04-20 22:07:27,393 - DEBUG - Starting /transactions/overview endpoint
+2025-04-20 22:07:27,400 - ERROR - Database connection failed: Textual SQL expression 'SELECT 1' should be explicitly declared as text('SELECT 1')
+Traceback (most recent call last):
+  File "C:\projects\SmartSaveApp\backend\routes\transaction_routes.py", line 253, in get_transaction_overview
+    db.session.execute("SELECT 1")
+  File "C:\Users\ACER\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\orm\scoping.py", line 778, in execute
+    return self._proxied.execute(
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ACER\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\orm\session.py", line 2362, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ACER\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\orm\session.py", line 2145, in _execute_internal
+    statement = coercions.expect(roles.StatementRole, statement)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ACER\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\sql\coercions.py", line 395, in expect
+    resolved = impl._literal_coercion(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ACER\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\sql\coercions.py", line 621, in _literal_coercion
+    return self._text_coercion(element, argname, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ACER\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\sql\coercions.py", line 614, in _text_coercion
+    return _no_text_coercion(element, argname)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ACER\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\sql\coercions.py", line 584, in _no_text_coercion
+    raise exc_cls(
+sqlalchemy.exc.ArgumentError: Textual SQL expression 'SELECT 1' should be explicitly declared as text('SELECT 1')
+2025-04-20 22:07:27,420 - DEBUG - Starting /transactions/recent endpoint
+2025-04-20 22:07:27,420 - DEBUG - Starting /transactions/all endpoint
+2025-04-20 22:07:27,420 - INFO - 127.0.0.1 - - [20/Apr/2025 22:07:27] "[35m[1mGET /api/transactions/overview HTTP/1.1[0m" 500 -
+2025-04-20 22:07:27,421 - INFO - 127.0.0.1 - - [20/Apr/2025 22:07:27] "GET /api/admin/users HTTP/1.1" 200 -
+2025-04-20 22:07:27,433 - DEBUG - Fetched 146 admin transactions
+2025-04-20 22:07:27,436 - DEBUG - Fetched recent activities: 10 transactions, 10 users, 5 flagged
+2025-04-20 22:07:27,442 - INFO - 127.0.0.1 - - [20/Apr/2025 22:07:27] "GET /api/transactions/all HTTP/1.1" 200 -
+2025-04-20 22:07:27,445 - INFO - 127.0.0.1 - - [20/Apr/2025 22:07:27] "GET /api/transactions/recent HTTP/1.1" 200 -
+2025-04-20 22:07:35,208 - INFO -  * Detected change in 'C:\\projects\\SmartSaveApp\\backend\\routes\\transaction_routes.py', reloading
