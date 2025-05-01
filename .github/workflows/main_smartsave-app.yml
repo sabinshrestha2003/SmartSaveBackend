@@ -1,29 +1,16 @@
-<<<<<<< HEAD
 name: Build and deploy Python app to Azure Web App - smartsave-app
-=======
-name: Build and deploy Python app to Azure Web App
-
-env:
-  AZURE_WEBAPP_NAME: smartsave-app  # Set to your Azure Web App name
-  PYTHON_VERSION: '3.10'            # Set to your Python version
->>>>>>> 4537f05eef2c8beb3b245955e7aa077d9f608d78
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
   workflow_dispatch:
-
-permissions:
-  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
-<<<<<<< HEAD
     permissions:
       contents: read
-=======
->>>>>>> 4537f05eef2c8beb3b245955e7aa077d9f608d78
 
     steps:
       - uses: actions/checkout@v4
@@ -31,11 +18,7 @@ jobs:
       - name: Set up Python version
         uses: actions/setup-python@v5
         with:
-<<<<<<< HEAD
           python-version: '3.10'
-=======
-          python-version: ${{ env.PYTHON_VERSION }}
->>>>>>> 4537f05eef2c8beb3b245955e7aa077d9f608d78
           cache: 'pip'
 
       - name: Create and start virtual environment
@@ -60,17 +43,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     environment:
-<<<<<<< HEAD
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
-      id-token: write
-=======
-      name: 'Development'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-    permissions:
       id-token: write  # Required for azure/login
->>>>>>> 4537f05eef2c8beb3b245955e7aa077d9f608d78
       contents: read
 
     steps:
@@ -85,24 +61,13 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-<<<<<<< HEAD
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_F0C771EED44744EFA3D63274B57A7AC4 }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_753C228C901740C2B5F7B07DFB5C36BC }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_9A20B0ACC3DB4CF18B2976669DE5837F }}
-=======
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
->>>>>>> 4537f05eef2c8beb3b245955e7aa077d9f608d78
 
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-<<<<<<< HEAD
           app-name: 'smartsave-app'
           package: '.'
-=======
-          app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          package: '.'
->>>>>>> 4537f05eef2c8beb3b245955e7aa077d9f608d78
