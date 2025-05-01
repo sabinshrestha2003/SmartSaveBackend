@@ -50,7 +50,12 @@ jobs:
       name: 'Development'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
+<<<<<<< HEAD
       contents: none
+=======
+      id-token: write  # Required for azure/login
+      contents: read
+>>>>>>> 4537f05eef2c8beb3b245955e7aa077d9f608d78
 
     steps:
       - name: Download artifact from build job
@@ -60,11 +65,25 @@ jobs:
 
       - name: Unzip artifact for deployment
         run: unzip release.zip
+<<<<<<< HEAD
+=======
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+>>>>>>> 4537f05eef2c8beb3b245955e7aa077d9f608d78
 
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
-        uses: azure/webapps-deploy@v2
+        uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
+<<<<<<< HEAD
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: '.'
+=======
+          package: '.'
+>>>>>>> 4537f05eef2c8beb3b245955e7aa077d9f608d78
