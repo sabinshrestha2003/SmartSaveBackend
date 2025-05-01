@@ -62,7 +62,8 @@ psutil==7.0.0
 pymango==0.1.1
 pymongo==4.11.3
 PyJWT==2.9.0
-PyMySQL==1.1.1
+cryptography>=42.0.5
+PyMySQL==1.1.0
 pyparsing==3.2.3
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
