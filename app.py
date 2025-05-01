@@ -1,5 +1,5 @@
 import os
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, jsonify
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from db import db
@@ -34,9 +34,13 @@ def create_app():
     JWTManager(app)
     CORS(app, resources={r"/api/*": {"origins": "*"}})
 
+    @app.route('/api/ping', methods=['GET'])
+    def ping():
+        return jsonify({'message': 'pong'}), 200
+
     register_routes(app)
 
-    @app.route('/uploads/<filename>')
+    @app.route('/Uploads/<filename>')
     def uploaded_file(filename):
         return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
