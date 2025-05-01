@@ -1,7 +1,6 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models.user import User
-from models.issue import Issue
 from models.bill_split import BillSplit
 from models.split_participant import SplitParticipant
 from models.group import Group
@@ -159,20 +158,6 @@ def delete_user(user_id):
         db.session.rollback()
         return jsonify({"error": f"Failed to delete user: {str(e)}"}), 500
 
-@admin_bp.route('/issues', methods=['GET'], endpoint='get_pending_issues')
-@admin_required()
-def get_pending_issues():
-    try:
-        issues = Issue.query.all()
-        disputes = [issue.to_dict() for issue in issues if issue.type == 'dispute']
-        complaints = [issue.to_dict() for issue in issues if issue.type == 'complaint']
-        return jsonify({
-            "disputes": disputes,
-            "complaints": complaints
-        }), 200
-    except Exception as e:
-        return jsonify({"error": f"Failed to fetch issues: {str(e)}"}), 500
-
 @admin_bp.route('/bill_splits', methods=['GET'], endpoint='get_all_bill_splits')
 @admin_required()
 def get_all_bill_splits():
@@ -303,7 +288,7 @@ def send_message_to_all_users():
                     failed_emails.append(user.email)
             except Exception as e:
                 print(f"Error sending to {user.email}: {str(e)}")
-                failed_emails.append(user.email)
+                cleanup_failed_emails.append(user.email)
 
         response = {
             "success_count": success_count,
