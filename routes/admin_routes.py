@@ -288,7 +288,7 @@ def send_message_to_all_users():
                     failed_emails.append(user.email)
             except Exception as e:
                 print(f"Error sending to {user.email}: {str(e)}")
-                cleanup_failed_emails.append(user.email)
+                failed_emails.append(user.email)  # Changed from cleanup_failed_emails to failed_emails
 
         response = {
             "success_count": success_count,
