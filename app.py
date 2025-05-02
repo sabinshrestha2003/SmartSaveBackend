@@ -23,7 +23,7 @@ def create_app():
 
     app.config['JWT_ACCESS_TOKEN_EXPIRES'] = app.config['TOKEN_EXPIRY_DAYS'] * 86400
 
-    UPLOAD_FOLDER = os.path.join(os.getcwd(), 'Uploads')
+    UPLOAD_FOLDER = os.path.join('/tmp', 'Uploads')  # Use /tmp for containers
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -45,11 +45,16 @@ def create_app():
         return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
     with app.app_context():
-        db.create_all()
+        try:
+            db.create_all()
+        except Exception as e:
+            print(f"Database initialization failed: {e}")
+            # Optionally, continue without crashing
+            # raise e  # Uncomment to crash for debugging
 
     return app
 
 if __name__ == '__main__':
     app = create_app()
-    port = int(os.environ.get('PORT', 8000))  
+    port = int(os.environ.get('PORT', 8000))
     app.run(host="0.0.0.0", port=port)
