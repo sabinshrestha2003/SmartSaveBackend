@@ -92,3 +92,5 @@ websocket-client==1.8.0
 Werkzeug==3.0.1
 yarl==1.19.0
 zopfli==0.2.3.post1
+waitress==2.1.2
+
