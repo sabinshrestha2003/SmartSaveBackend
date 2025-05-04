@@ -441,16 +441,33 @@ def delete_group(current_user_id, group_id):
 @user_required()
 def get_group(current_user_id, group_id):
     try:
-        group = Group.query.get(group_id)
+        # Use raw SQL to fetch the group and bypass ORM issues
+        cursor = db.session.connection().connection.cursor(dictionary=True)
+        cursor.execute('SELECT * FROM `groups` WHERE id = %s', (group_id,))
+        group = cursor.fetchone()
+        print(f"Group query result for id {group_id}: {group}")  # Debug log
+
         if not group:
             return jsonify({"error": "Group not found"}), 404
 
-        if not GroupMember.query.filter_by(group_id=group_id, user_id=current_user_id).first():
+        # Check if the user is a member or the creator
+        cursor.execute('SELECT user_id FROM `group_members` WHERE group_id = %s AND user_id = %s', (group_id, current_user_id))
+        member = cursor.fetchone()
+        print(f"Membership check for group_id {group_id}, user_id {current_user_id}: {member}")  # Debug log
+
+        if not member and int(group['creator_id']) != current_user_id:
             return jsonify({"error": "You are not a member of this group"}), 403
 
-        return jsonify({"group": group.to_dict()}), 200
+        # Fetch all members
+        cursor.execute('SELECT user_id FROM `group_members` WHERE group_id = %s', (group_id,))
+        members = [row['user_id'] for row in cursor.fetchall()]
+        group['members'] = members
+
+        cursor.close()
+        return jsonify({"group": group}), 200
     except Exception as e:
         db.session.rollback()
+        print(f"Error fetching group: {str(e)}")  # Debug log
         return jsonify({"error": f"Failed to fetch group: {str(e)}"}), 500
 
 @bill_split_bp.route('/groups/<int:group_id>', methods=['PUT'], endpoint='update_group')
