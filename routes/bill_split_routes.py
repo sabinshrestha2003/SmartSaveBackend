@@ -24,6 +24,11 @@ def get_next_group_id():
     max_id = db.session.query(db.func.max(Group.id)).scalar()
     return (max_id or 0) + 1
 
+def get_next_group_member_id():
+    """Generate a unique group member ID by incrementing the max id."""
+    max_id = db.session.query(db.func.max(GroupMember.id)).scalar()
+    return (max_id or 0) + 1
+
 @bill_split_bp.route('/groups', methods=['POST'], endpoint='create_group')
 @user_required()
 def create_group(current_user_id):
@@ -54,12 +59,20 @@ def create_group(current_user_id):
         db.session.add(group)
         db.session.flush()
 
-        creator_member = GroupMember(group_id=group.id, user_id=current_user_id)
+        creator_member = GroupMember(
+            id=get_next_group_member_id(),
+            group_id=group.id,
+            user_id=current_user_id
+        )
         db.session.add(creator_member)
 
         for member_id in members:
             if int(member_id) != current_user_id:
-                member = GroupMember(group_id=group.id, user_id=int(member_id))
+                member = GroupMember(
+                    id=get_next_group_member_id(),
+                    group_id=group.id,
+                    user_id=int(member_id)
+                )
                 db.session.add(member)
 
         db.session.commit()
@@ -71,7 +84,6 @@ def create_group(current_user_id):
         db.session.rollback()
         return jsonify({"error": f"Failed to create group: {str(e)}"}), 500
 
-# Other endpoints remain unchanged
 @bill_split_bp.route('/users/search', methods=['GET'], endpoint='search_users')
 @user_required()
 def search_users(current_user_id):
@@ -480,7 +492,11 @@ def update_group(current_user_id, group_id):
 
         for member_id in new_member_ids - current_member_ids:
             if member_id != current_user_id:
-                new_member = GroupMember(group_id=group.id, user_id=member_id)
+                new_member = GroupMember(
+                    id=get_next_group_member_id(),
+                    group_id=group.id,
+                    user_id=member_id
+                )
                 db.session.add(new_member)
 
         for member in current_members:
