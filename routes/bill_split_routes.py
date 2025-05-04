@@ -24,11 +24,6 @@ def get_next_group_id():
     max_id = db.session.query(db.func.max(Group.id)).scalar()
     return (max_id or 0) + 1
 
-def get_next_group_member_id():
-    """Generate a unique group member ID by incrementing the max id."""
-    max_id = db.session.query(db.func.max(GroupMember.id)).scalar()
-    return (max_id or 0) + 1
-
 @bill_split_bp.route('/groups', methods=['POST'], endpoint='create_group')
 @user_required()
 def create_group(current_user_id):
@@ -60,7 +55,6 @@ def create_group(current_user_id):
         db.session.flush()
 
         creator_member = GroupMember(
-            id=get_next_group_member_id(),
             group_id=group.id,
             user_id=current_user_id
         )
@@ -69,7 +63,6 @@ def create_group(current_user_id):
         for member_id in members:
             if int(member_id) != current_user_id:
                 member = GroupMember(
-                    id=get_next_group_member_id(),
                     group_id=group.id,
                     user_id=int(member_id)
                 )
@@ -493,7 +486,6 @@ def update_group(current_user_id, group_id):
         for member_id in new_member_ids - current_member_ids:
             if member_id != current_user_id:
                 new_member = GroupMember(
-                    id=get_next_group_member_id(),
                     group_id=group.id,
                     user_id=member_id
                 )
@@ -504,7 +496,7 @@ def update_group(current_user_id, group_id):
                 db.session.delete(member)
 
         db.session.commit()
-        return jsonify({"message": "Group updated", "group": group.to_dict()}), 200
+        return jsonify({"message": "Group updated", "group": group.to_dict()}), 201
     except ValueError as ve:
         db.session.rollback()
         return jsonify({"error": str(ve)}), 400
