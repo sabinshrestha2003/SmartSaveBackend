@@ -4,16 +4,17 @@ from db import db
 class SavingsGoal(db.Model):
     __tablename__ = 'savings_goals'
 
-    id = db.Column(db.Integer, primary_key=True)
+    my_row_id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    id = db.Column(db.Integer, nullable=False)  
     name = db.Column(db.String(100), nullable=False)
     target = db.Column(db.Float, nullable=False)
-    progress = db.Column(db.Float, default=0.0)
+    progress = db.Column(db.Float, default=0.0, nullable=False)
     deadline = db.Column(db.Date, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # Nullable per schema
 
-    def __init__(self, name: str, target: float, deadline: date, user_id: int, progress: float = 0.0):
+    def __init__(self, id: int, name: str, target: float, deadline: date, user_id: int, progress: float = 0.0):
         self.validate_inputs(name, target, deadline, progress)
-        
+        self.id = id
         self.name = name
         self.target = target
         self.progress = progress
@@ -32,9 +33,11 @@ class SavingsGoal(db.Model):
 
     def to_dict(self) -> dict:
         return {
+            "my_row_id": self.my_row_id,  
             "id": self.id,
             "name": self.name,
             "target": self.target,
             "progress": self.progress,
             "deadline": self.deadline.strftime('%Y-%m-%d'),
+            "user_id": self.user_id
         }

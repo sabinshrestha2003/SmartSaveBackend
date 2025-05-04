@@ -8,6 +8,11 @@ import calendar
 
 savings_goal_bp = Blueprint('savings_goal', __name__)
 
+def get_next_goal_id():
+    """Generate a unique goal ID by incrementing the max id."""
+    max_id = db.session.query(func.max(SavingsGoal.id)).scalar()
+    return (max_id or 0) + 1
+
 @savings_goal_bp.route('/goals', methods=['POST'])
 @jwt_required()
 def add_savings_goal():
@@ -34,7 +39,14 @@ def add_savings_goal():
         if progress < 0:
             return jsonify({"error": "Progress must be non-negative"}), 400
 
-        new_goal = SavingsGoal(name=name, target=target, deadline=deadline_date, progress=progress, user_id=user_id)
+        new_goal = SavingsGoal(
+            id=get_next_goal_id(),
+            name=name,
+            target=target,
+            deadline=deadline_date,
+            progress=progress,
+            user_id=user_id
+        )
         db.session.add(new_goal)
         db.session.commit()
 
@@ -133,7 +145,7 @@ def get_savings_trends():
             labels = [f'Year {year}' for year, _ in trends_data]
             monthly_savings = [float(total) for _, total in trends_data]
 
-        else:  # Monthly
+        else:  
             trends_data = db.session.query(
                 extract('year', SavingsGoal.deadline).label('year'),
                 extract('month', SavingsGoal.deadline).label('month'),
