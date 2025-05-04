@@ -342,7 +342,7 @@ def update_bill_split(current_user_id, bill_split_id):
         db.session.rollback()
         return jsonify({"error": f"Failed to update bill split: {str(e)}"}), 500
 
-@bill_split_bp.route('/settXYZ', methods=['GET'], endpoint='get_user_settlements')
+@bill_split_bp.route('/settlements', methods=['GET'], endpoint='get_user_settlements')
 @user_required()
 def get_user_settlements(current_user_id):
     try:
