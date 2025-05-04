@@ -19,6 +19,11 @@ def user_required():
         return decorator
     return wrapper
 
+def get_next_group_id():
+    """Generate a unique group ID by incrementing the max id."""
+    max_id = db.session.query(db.func.max(Group.id)).scalar()
+    return (max_id or 0) + 1
+
 @bill_split_bp.route('/groups', methods=['POST'], endpoint='create_group')
 @user_required()
 def create_group(current_user_id):
@@ -39,6 +44,7 @@ def create_group(current_user_id):
                 raise ValueError(f"User with ID {member_id} does not exist")
 
         group = Group(
+            id=get_next_group_id(),
             name=name,
             creator_id=current_user_id,
             type=type_,
@@ -65,6 +71,7 @@ def create_group(current_user_id):
         db.session.rollback()
         return jsonify({"error": f"Failed to create group: {str(e)}"}), 500
 
+# Other endpoints remain unchanged
 @bill_split_bp.route('/users/search', methods=['GET'], endpoint='search_users')
 @user_required()
 def search_users(current_user_id):
@@ -74,7 +81,6 @@ def search_users(current_user_id):
             return jsonify({"users": []}), 200
 
         users = []
-        # Check if query is a valid email format
         if '@' in query and '.' in query:
             user = User.query.filter_by(email=query.lower()).first()
             if user and user.id != current_user_id:
@@ -86,7 +92,6 @@ def search_users(current_user_id):
                 if user and user.id != current_user_id:
                     users = [user]
             except ValueError:
-                # Search by name
                 users = User.query.filter(
                     User.name.ilike(f'%{query}%')
                 ).limit(10).all()
@@ -109,23 +114,19 @@ def search_users(current_user_id):
 def delete_bill_split(current_user_id, bill_split_id):
     try:
         bill_split = BillSplit.query.get_or_404(bill_split_id)
-
         if bill_split.creator_id != current_user_id:
             return jsonify({"error": "Only the creator can delete this bill split"}), 403
 
         SplitParticipant.query.filter_by(bill_split_id=bill_split_id).delete()
-
         Settlement.query.filter_by(bill_split_id=bill_split_id).delete()
-
         db.session.delete(bill_split)
-
         db.session.commit()
 
         return jsonify({"message": "Bill split deleted successfully"}), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": f"Failed to delete bill split: {str(e)}"}), 500
-    
+
 @bill_split_bp.route('/groups', methods=['GET'], endpoint='get_user_groups')
 @user_required()
 def get_user_groups(current_user_id):
@@ -267,7 +268,7 @@ def create_bill_split(current_user_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": f"Failed to create bill split: {str(e)}"}), 500
-    
+
 @bill_split_bp.route('/bill_splits', methods=['GET'], endpoint='get_user_bill_splits')
 @user_required()
 def get_user_bill_splits(current_user_id):
@@ -284,7 +285,7 @@ def get_user_bill_splits(current_user_id):
 def update_bill_split(current_user_id, bill_split_id):
     try:
         bill_split = BillSplit.query.get_or_404(bill_split_id)
-        
+
         participant = SplitParticipant.query.filter_by(
             bill_split_id=bill_split_id, user_id=current_user_id
         ).first()
@@ -300,7 +301,7 @@ def update_bill_split(current_user_id, bill_split_id):
             user_id = participant_data.get('user_id')
             if not user_id:
                 raise ValueError("Each participant must have a user_id")
-            
+
             split_participant = SplitParticipant.query.filter_by(
                 bill_split_id=bill_split_id, user_id=int(user_id)
             ).first()
@@ -359,12 +360,12 @@ def get_user_settlements(current_user_id):
 def create_settlement(current_user_id):
     try:
         data = request.get_json()
-        payer_id = data.get('payer_id')  
-        payee_id = data.get('payee_id') 
+        payer_id = data.get('payer_id')
+        payee_id = data.get('payee_id')
         amount = data.get('amount')
-        split_id = data.get('split_id') 
-        split_name = data.get('split_name') 
-        timestamp = data.get('timestamp')  
+        split_id = data.get('split_id')
+        split_name = data.get('split_name')
+        timestamp = data.get('timestamp')
 
         if not payer_id or not payee_id:
             raise ValueError("Payer and payee user IDs are required")
@@ -398,7 +399,7 @@ def create_settlement(current_user_id):
         settlement_dict['split_id'] = settlement_dict.pop('bill_split_id')
         settlement_dict['payer_id'] = settlement_dict.pop('from_user_id')
         settlement_dict['payee_id'] = settlement_dict.pop('to_user_id')
-        settlement_dict['timestamp'] = timestamp  
+        settlement_dict['timestamp'] = timestamp
 
         return jsonify({"message": "Settlement created", "settlement": settlement_dict}), 201
     except ValueError as ve:
@@ -417,7 +418,6 @@ def delete_group(current_user_id, group_id):
             return jsonify({"error": "Only the group creator can delete the group"}), 403
 
         GroupMember.query.filter_by(group_id=group_id).delete()
-
         bill_splits = BillSplit.query.filter_by(group_id=group_id).all()
         for bill_split in bill_splits:
             SplitParticipant.query.filter_by(bill_split_id=bill_split.id).delete()
@@ -439,10 +439,10 @@ def get_group(current_user_id, group_id):
         group = Group.query.get(group_id)
         if not group:
             return jsonify({"error": "Group not found"}), 404
-        
+
         if not GroupMember.query.filter_by(group_id=group_id, user_id=current_user_id).first():
             return jsonify({"error": "You are not a member of this group"}), 403
-        
+
         return jsonify({"group": group.to_dict()}), 200
     except Exception as e:
         db.session.rollback()
@@ -460,11 +460,11 @@ def update_group(current_user_id, group_id):
         name = data.get('name')
         if not name:
             raise ValueError("Group name is required")
-        
+
         type_ = data.get('type', group.type)
         if type_ not in ['Trip', 'Home', 'Event', 'Custom']:
             raise ValueError("Invalid group type. Use: Trip, Home, Event, Custom")
-        
+
         members = data.get('members', [])
 
         for member_id in members:
@@ -479,7 +479,7 @@ def update_group(current_user_id, group_id):
         new_member_ids = set(map(int, members))
 
         for member_id in new_member_ids - current_member_ids:
-            if member_id != current_user_id:  
+            if member_id != current_user_id:
                 new_member = GroupMember(group_id=group.id, user_id=member_id)
                 db.session.add(new_member)
 
