@@ -8,6 +8,11 @@ from datetime import datetime, timedelta
 
 transaction_bp = Blueprint('transaction', __name__)
 
+def get_next_transaction_id():
+    """Generate a unique transaction ID by incrementing the max id."""
+    max_id = db.session.query(db.func.max(Transaction.id)).scalar()
+    return (max_id or 0) + 1
+
 @transaction_bp.route('/income', methods=['POST'])
 @jwt_required()
 def add_income():
@@ -24,6 +29,7 @@ def add_income():
             return jsonify({"error": "Missing required fields: amount, category, account, and date are mandatory"}), 400
 
         new_transaction = Transaction(
+            id=get_next_transaction_id(),  # Generate unique id
             amount=amount,
             category=category,
             account=account,
@@ -31,7 +37,7 @@ def add_income():
             date=date,
             type='income',
             user_id=user_id,
-            flagged=data.get('flagged', False)  
+            flagged=data.get('flagged', False)
         )
         db.session.add(new_transaction)
         db.session.commit()
@@ -57,6 +63,7 @@ def add_expense():
             return jsonify({"error": "Missing required fields: amount, category, account, and date are mandatory"}), 400
 
         new_transaction = Transaction(
+            id=get_next_transaction_id(),  # Generate unique id
             amount=amount,
             category=category,
             account=account,
@@ -64,7 +71,7 @@ def add_expense():
             date=date,
             type='expense',
             user_id=user_id,
-            flagged=data.get('flagged', False)  
+            flagged=data.get('flagged', False)
         )
         db.session.add(new_transaction)
         db.session.commit()
@@ -80,7 +87,7 @@ def get_all_transactions():
     try:
         user_id = get_jwt_identity()
         transactions = Transaction.query.filter_by(user_id=user_id).all()
-        transaction_list = [txn.to_dict() for txn in transactions]  
+        transaction_list = [txn.to_dict() for txn in transactions]
         return jsonify(transaction_list), 200
     except Exception as e:
         return jsonify({"error": f"Failed to fetch transactions: {str(e)}"}), 500
@@ -121,7 +128,7 @@ def update_transaction(transaction_id):
         if 'type' in data:
             transaction.type = data['type']
         if 'flagged' in data:
-            transaction.flagged = data.get('flagged', False)  
+            transaction.flagged = data.get('flagged', False)
 
         db.session.commit()
 
@@ -130,7 +137,7 @@ def update_transaction(transaction_id):
         db.session.rollback()
         return jsonify({"error": f"Failed to update transaction: {str(e)}"}), 500
 
-@transaction_bp.route('/<int:transaction_id>', methods=['DELETE']) 
+@transaction_bp.route('/<int:transaction_id>', methods=['DELETE'])
 @jwt_required()
 def delete_transaction(transaction_id):
     try:
@@ -147,12 +154,12 @@ def delete_transaction(transaction_id):
         db.session.rollback()
         return jsonify({"error": f"Failed to delete transaction: {str(e)}"}), 500
 
-@transaction_bp.route('/all', methods=['GET'], endpoint='get_all_admin_transactions')  
+@transaction_bp.route('/all', methods=['GET'], endpoint='get_all_admin_transactions')
 @admin_required()
 def get_all_admin_transactions():
     try:
         transactions = Transaction.query.all()
-        transaction_list = [txn.to_dict() for txn in transactions]  
+        transaction_list = [txn.to_dict() for txn in transactions]
         return jsonify(transaction_list), 200
     except Exception as e:
         return jsonify({"error": f"Failed to fetch all transactions: {str(e)}"}), 500
@@ -186,7 +193,7 @@ def get_transaction_overview():
 
         return jsonify({
             "totalTransactions": total_transactions,
-            "totalSavings": float(savings),  
+            "totalSavings": float(savings),
             "totalExpenses": float(expenses)
         }), 200
     except Exception as e:
@@ -197,7 +204,7 @@ def get_transaction_overview():
 def get_recent_activities():
     try:
         recent_transactions = Transaction.query.order_by(Transaction.date.desc()).limit(10).all()
-        transactions_list = [t.to_dict() for t in recent_transactions]  
+        transactions_list = [t.to_dict() for t in recent_transactions]
 
         new_users = User.query.order_by(User.created_at.desc()).limit(10).all()
         users_list = [{
@@ -206,11 +213,11 @@ def get_recent_activities():
             "email": u.email,
             "joinedDate": u.created_at.strftime('%Y-%m-%d %H:%M:%S'),
             "last_login": u.last_login.strftime('%Y-%m-%d %H:%M:%S') if u.last_login else None,
-            "isBanned": u.is_banned  
+            "isBanned": u.is_banned
         } for u in new_users]
 
         flagged_transactions = Transaction.query.filter_by(flagged=True).order_by(Transaction.date.desc()).limit(5).all()
-        flagged_list = [t.to_dict() for t in flagged_transactions]  
+        flagged_list = [t.to_dict() for t in flagged_transactions]
 
         return jsonify({
             "recentTransactions": transactions_list,
