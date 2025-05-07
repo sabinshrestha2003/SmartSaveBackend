@@ -310,7 +310,7 @@ def update_bill_split(current_user_id, bill_split_id):
             raise ValueError("Participants must be a non-empty list")
 
         for participant_data in participants:
-            user_id = participant_data.get('user TDP_id')
+            user_id = participant_data.get('user_id')  # Fixed typo: 'user TDP_id' to 'user_id'
             if not user_id:
                 raise ValueError("Each participant must have a user_id")
 
@@ -432,7 +432,8 @@ def create_settlement(current_user_id):
 def delete_group(current_user_id, group_id):
     try:
         group = Group.query.get_or_404(group_id)
-        if group.creator_id != current_user_id:
+        # Cast both IDs to integers to ensure consistent comparison
+        if int(group.creator_id) != int(current_user_id):
             return jsonify({"error": "Only the group creator can delete the group"}), 403
 
         bill_splits = BillSplit.query.filter_by(group_id=group_id).all()
