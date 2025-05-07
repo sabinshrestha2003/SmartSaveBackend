@@ -7,6 +7,11 @@ from models.bill_split import BillSplit
 from models.split_participant import SplitParticipant
 from models.settlement import Settlement
 from models.user import User
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 bill_split_bp = Blueprint('bill_split', __name__)
 
@@ -15,6 +20,7 @@ def user_required():
         @jwt_required()
         def decorator(*args, **kwargs):
             user_id = get_jwt_identity()
+            logger.debug(f"Extracted user_id from JWT: {user_id} (type: {type(user_id)})")
             return fn(user_id, *args, **kwargs)
         return decorator
     return wrapper
@@ -69,12 +75,15 @@ def create_group(current_user_id):
                 db.session.add(member)
 
         db.session.commit()
+        logger.info(f"Group created: id={group.id}, name={name}, creator_id={current_user_id}")
         return jsonify({"message": "Group created", "group": group.to_dict()}), 201
     except ValueError as ve:
         db.session.rollback()
+        logger.error(f"ValueError in create_group: {str(ve)}")
         return jsonify({"error": str(ve)}), 400
     except Exception as e:
         db.session.rollback()
+        logger.error(f"Exception in create_group: {str(e)}")
         return jsonify({"error": f"Failed to create group: {str(e)}"}), 500
 
 @bill_split_bp.route('/users/search', methods=['GET'], endpoint='search_users')
@@ -110,8 +119,10 @@ def search_users(current_user_id):
             }
             for u in users if u.id != current_user_id
         ]
+        logger.debug(f"Search users query: {query}, found: {len(user_list)} users")
         return jsonify({"users": user_list}), 200
     except Exception as e:
+        logger.error(f"Exception in search_users: {str(e)}")
         return jsonify({"error": f"Failed to search users: {str(e)}"}), 500
 
 @bill_split_bp.route('/bill_splits/<int:bill_split_id>', methods=['DELETE'], endpoint='delete_bill_split')
@@ -127,9 +138,11 @@ def delete_bill_split(current_user_id, bill_split_id):
         db.session.delete(bill_split)
         db.session.commit()
 
+        logger.info(f"Bill split deleted: id={bill_split_id}, user_id={current_user_id}")
         return jsonify({"message": "Bill split deleted successfully"}), 200
     except Exception as e:
         db.session.rollback()
+        logger.error(f"Exception in delete_bill_split: {str(e)}")
         return jsonify({"error": f"Failed to delete bill split: {str(e)}"}), 500
 
 @bill_split_bp.route('/groups', methods=['GET'], endpoint='get_user_groups')
@@ -137,8 +150,10 @@ def delete_bill_split(current_user_id, bill_split_id):
 def get_user_groups(current_user_id):
     try:
         groups = Group.query.join(GroupMember).filter(GroupMember.user_id == current_user_id).all()
+        logger.debug(f"Fetched {len(groups)} groups for user_id: {current_user_id}")
         return jsonify({"groups": [group.to_dict() for group in groups]}), 200
     except Exception as e:
+        logger.error(f"Exception in get_user_groups: {str(e)}")
         return jsonify({"error": f"Failed to fetch groups: {str(e)}"}), 500
 
 @bill_split_bp.route('/bill_splits', methods=['POST'], endpoint='create_bill_split')
@@ -273,12 +288,15 @@ def create_bill_split(current_user_id):
         ]
         bill_split_dict['group_name'] = group.name if group_id and group else None
         bill_split_dict['creator_name'] = creator.name
+        logger.info(f"Bill split created: id={bill_split.id}, user_id={current_user_id}")
         return jsonify({"message": "Bill split created", "bill_split": bill_split_dict}), 201
     except ValueError as ve:
         db.session.rollback()
+        logger.error(f"ValueError in create_bill_split: {str(ve)}")
         return jsonify({"error": str(ve)}), 400
     except Exception as e:
         db.session.rollback()
+        logger.error(f"Exception in create_bill_split: {str(e)}")
         return jsonify({"error": f"Failed to create bill split: {str(e)}"}), 500
 
 @bill_split_bp.route('/bill_splits', methods=['GET'], endpoint='get_user_bill_splits')
@@ -288,8 +306,10 @@ def get_user_bill_splits(current_user_id):
         bill_splits = BillSplit.query.join(SplitParticipant).filter(
             SplitParticipant.user_id == current_user_id
         ).all()
+        logger.debug(f"Fetched {len(bill_splits)} bill splits for user_id: {current_user_id}")
         return jsonify({"bill_splits": [bs.to_dict() for bs in bill_splits]}), 200
     except Exception as e:
+        logger.error(f"Exception in get_user_bill_splits: {str(e)}")
         return jsonify({"error": f"Failed to fetch bill splits: {str(e)}"}), 500
 
 @bill_split_bp.route('/bill_splits/<int:bill_split_id>', methods=['PUT'], endpoint='update_bill_split')
@@ -310,7 +330,7 @@ def update_bill_split(current_user_id, bill_split_id):
             raise ValueError("Participants must be a non-empty list")
 
         for participant_data in participants:
-            user_id = participant_data.get('user_id')  # Fixed typo: 'user TDP_id' to 'user_id'
+            user_id = participant_data.get('user_id')
             if not user_id:
                 raise ValueError("Each participant must have a user_id")
 
@@ -324,7 +344,7 @@ def update_bill_split(current_user_id, bill_split_id):
                 split_participant.paid_amount = float(participant_data['paid_amount'])
             if 'share_amount' in participant_data:
                 split_participant.share_amount = float(participant_data['share_amount'])
-            if 'status' in participant_data:  # Allow updating status
+            if 'status' in participant_data:
                 split_participant.status = participant_data['status']
 
         if 'name' in data:
@@ -347,12 +367,15 @@ def update_bill_split(current_user_id, bill_split_id):
             bill_split.is_recurring = data['is_recurring']
 
         db.session.commit()
+        logger.info(f"Bill split updated: id={bill_split_id}, user_id={current_user_id}")
         return jsonify({"message": "Bill split updated", "bill_split": bill_split.to_dict()}), 200
     except ValueError as ve:
         db.session.rollback()
+        logger.error(f"ValueError in update_bill_split: {str(ve)}")
         return jsonify({"error": str(ve)}), 400
     except Exception as e:
         db.session.rollback()
+        logger.error(f"Exception in update_bill_split: {str(e)}")
         return jsonify({"error": f"Failed to update bill split: {str(e)}"}), 500
 
 @bill_split_bp.route('/settlements', methods=['GET'], endpoint='get_user_settlements')
@@ -369,8 +392,10 @@ def get_user_settlements(current_user_id):
             s_dict['payer_id'] = s_dict.pop('from_user_id')
             s_dict['payee_id'] = s_dict.pop('to_user_id')
             formatted_settlements.append(s_dict)
+        logger.debug(f"Fetched {len(formatted_settlements)} settlements for user_id: {current_user_id}")
         return jsonify({"settlements": formatted_settlements}), 200
     except Exception as e:
+        logger.error(f"Exception in get_user_settlements: {str(e)}")
         return jsonify({"error": f"Failed to fetch settlements: {str(e)}"}), 500
 
 @bill_split_bp.route('/settlements', methods=['POST'], endpoint='create_settlement')
@@ -418,13 +443,15 @@ def create_settlement(current_user_id):
         settlement_dict['payer_id'] = settlement_dict.pop('from_user_id')
         settlement_dict['payee_id'] = settlement_dict.pop('to_user_id')
         settlement_dict['timestamp'] = timestamp
-
+        logger.info(f"Settlement created: id={settlement.id}, user_id={current_user_id}")
         return jsonify({"message": "Settlement created", "settlement": settlement_dict}), 201
     except ValueError as ve:
         db.session.rollback()
+        logger.error(f"ValueError in create_settlement: {str(ve)}")
         return jsonify({"error": str(ve)}), 400
     except Exception as e:
         db.session.rollback()
+        logger.error(f"Exception in create_settlement: {str(e)}")
         return jsonify({"error": f"Failed to create settlement: {str(e)}"}), 500
 
 @bill_split_bp.route('/groups/<int:group_id>', methods=['DELETE'], endpoint='delete_group')
@@ -432,8 +459,9 @@ def create_settlement(current_user_id):
 def delete_group(current_user_id, group_id):
     try:
         group = Group.query.get_or_404(group_id)
-        # Cast both IDs to integers to ensure consistent comparison
+        logger.debug(f"Deleting group {group_id}, creator_id: {group.creator_id} (type: {type(group.creator_id)}), user_id: {current_user_id} (type: {type(current_user_id)})")
         if int(group.creator_id) != int(current_user_id):
+            logger.warning(f"User {current_user_id} is not creator of group {group_id}, creator_id: {group.creator_id}")
             return jsonify({"error": "Only the group creator can delete the group"}), 403
 
         bill_splits = BillSplit.query.filter_by(group_id=group_id).all()
@@ -445,9 +473,11 @@ def delete_group(current_user_id, group_id):
         db.session.delete(group)
         db.session.commit()
 
+        logger.info(f"Group deleted: id={group_id}, user_id={current_user_id}")
         return jsonify({"message": "Group deleted successfully"}), 200
     except Exception as e:
         db.session.rollback()
+        logger.error(f"Exception in delete_group: {str(e)}")
         return jsonify({"error": f"Failed to delete group: {str(e)}"}), 500
 
 @bill_split_bp.route('/groups/<int:group_id>', methods=['GET'], endpoint='get_group')
@@ -456,10 +486,12 @@ def get_group(current_user_id, group_id):
     try:
         group = Group.query.get(group_id)
         if not group:
+            logger.warning(f"Group {group_id} not found")
             return jsonify({"error": "Group not found"}), 404
 
         is_member = GroupMember.query.filter_by(group_id=group_id, user_id=current_user_id).first()
         if not is_member and group.creator_id != current_user_id:
+            logger.warning(f"User {current_user_id} is not a member of group {group_id}")
             return jsonify({"error": "You are not a member of this group"}), 403
 
         members = [gm.user_id for gm in GroupMember.query.filter_by(group_id=group_id).all()]
@@ -467,9 +499,11 @@ def get_group(current_user_id, group_id):
         group_dict = group.to_dict()
         group_dict['members'] = members
 
+        logger.debug(f"Fetched group {group_id} for user_id: {current_user_id}")
         return jsonify({"group": group_dict}), 200
     except Exception as e:
         db.session.rollback()
+        logger.error(f"Exception in get_group: {str(e)}")
         return jsonify({"error": f"Failed to fetch group: {str(e)}"}), 500
 
 @bill_split_bp.route('/groups/<int:group_id>', methods=['PUT'], endpoint='update_group')
@@ -478,6 +512,7 @@ def update_group(current_user_id, group_id):
     try:
         group = Group.query.get_or_404(group_id)
         if group.creator_id != current_user_id:
+            logger.warning(f"User {current_user_id} is not creator of group {group_id}")
             return jsonify({"error": "Only the group creator can edit the group"}), 403
 
         data = request.get_json()
@@ -515,10 +550,13 @@ def update_group(current_user_id, group_id):
                 db.session.delete(member)
 
         db.session.commit()
+        logger.info(f"Group updated: id={group_id}, user_id={current_user_id}")
         return jsonify({"message": "Group updated", "group": group.to_dict()}), 201
     except ValueError as ve:
         db.session.rollback()
+        logger.error(f"ValueError in update_group: {str(ve)}")
         return jsonify({"error": str(ve)}), 400
     except Exception as e:
         db.session.rollback()
+        logger.error(f"Exception in update_group: {str(e)}")
         return jsonify({"error": f"Failed to update group: {str(e)}"}), 500
