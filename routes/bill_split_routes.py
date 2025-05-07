@@ -226,34 +226,36 @@ def create_bill_split(current_user_id):
         db.session.add(bill_split)
         db.session.flush()
 
-        for participant in participants:
-            user_id = participant.get('user_id')
-            paid_amount = float(participant.get('paid_amount', 0))
-            share_amount = float(participant.get('share_amount', 0))
-            split_method = participant.get('split_method', 'equal')
-            split_value = float(participant.get('split_value', 1))
+        with db.session.no_autoflush:  # Prevent premature flush during user and group queries
+            for participant in participants:
+                user_id = participant.get('user_id')
+                paid_amount = float(participant.get('paid_amount', 0))
+                share_amount = float(participant.get('share_amount', 0))
+                split_method = participant.get('split_method', 'equal')
+                split_value = float(participant.get('split_value', 1))
 
-            if not User.query.get(int(user_id)):
-                raise ValueError(f"User with ID {user_id} does not exist")
+                if not User.query.get(int(user_id)):
+                    raise ValueError(f"User with ID {user_id} does not exist")
 
-            split_participant = SplitParticipant(
-                bill_split_id=bill_split.id,
-                user_id=int(user_id),
-                paid_amount=paid_amount,
-                share_amount=share_amount,
-                split_method=split_method,
-                split_value=split_value
-            )
-            db.session.add(split_participant)
+                split_participant = SplitParticipant(
+                    bill_split_id=bill_split.id,
+                    user_id=int(user_id),
+                    paid_amount=paid_amount,
+                    share_amount=share_amount,
+                    split_method=split_method,
+                    split_value=split_value,
+                    status='pending'  # Explicitly set to match table default
+                )
+                db.session.add(split_participant)
 
-        if group_id:
-            group = Group.query.get(group_id)
-            if not group:
-                raise ValueError(f"Group with ID {group_id} does not exist")
-            group_members = {gm.user_id for gm in GroupMember.query.filter_by(group_id=group_id).all()}
-            participant_ids = {int(p['user_id']) for p in participants}
-            if not participant_ids.issubset(group_members):
-                raise ValueError("All participants must be members of the selected group")
+            if group_id:
+                group = Group.query.get(group_id)
+                if not group:
+                    raise ValueError(f"Group with ID {group_id} does not exist")
+                group_members = {gm.user_id for gm in GroupMember.query.filter_by(group_id=group_id).all()}
+                participant_ids = {int(p['user_id']) for p in participants}
+                if not participant_ids.issubset(group_members):
+                    raise ValueError("All participants must be members of the selected group")
 
         db.session.commit()
 
@@ -265,7 +267,8 @@ def create_bill_split(current_user_id):
                 'share_amount': p.share_amount,
                 'paid_amount': p.paid_amount,
                 'split_method': p.split_method,
-                'split_value': p.split_value
+                'split_value': p.split_value,
+                'status': p.status
             } for p in bill_split.participants
         ]
         bill_split_dict['group_name'] = group.name if group_id and group else None
@@ -307,7 +310,7 @@ def update_bill_split(current_user_id, bill_split_id):
             raise ValueError("Participants must be a non-empty list")
 
         for participant_data in participants:
-            user_id = participant_data.get('user_id')
+            user_id = participant_data.get('user TDP_id')
             if not user_id:
                 raise ValueError("Each participant must have a user_id")
 
@@ -321,6 +324,8 @@ def update_bill_split(current_user_id, bill_split_id):
                 split_participant.paid_amount = float(participant_data['paid_amount'])
             if 'share_amount' in participant_data:
                 split_participant.share_amount = float(participant_data['share_amount'])
+            if 'status' in participant_data:  # Allow updating status
+                split_participant.status = participant_data['status']
 
         if 'name' in data:
             bill_split.name = data['name']
