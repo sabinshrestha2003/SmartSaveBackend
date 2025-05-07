@@ -8,6 +8,7 @@ from models.split_participant import SplitParticipant
 from models.settlement import Settlement
 from models.user import User
 import logging
+from datetime import datetime
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -149,7 +150,10 @@ def delete_bill_split(current_user_id, bill_split_id):
 @user_required()
 def get_user_groups(current_user_id):
     try:
-        groups = Group.query.join(GroupMember).filter(GroupMember.user_id == current_user_id).all()
+        groups = Group.query.join(GroupMember).filter(
+            GroupMember.user_id == current_user_id,
+            Group.deleted_at.is_(None)
+        ).all()
         logger.debug(f"Fetched {len(groups)} groups for user_id: {current_user_id}")
         return jsonify({"groups": [group.to_dict() for group in groups]}), 200
     except Exception as e:
@@ -174,8 +178,8 @@ def create_bill_split(current_user_id):
 
         group_id = data.get('group_id')
         category = data.get('category')
-        currency = data.get('currency', 'INR')  # Default to INR as per table
-        status = data.get('status', 'active')  # Default to active as per table
+        currency = data.get('currency', 'INR')
+        status = data.get('status', 'active')
         photo_url = data.get('photo_url')
         notes = data.get('notes')
         is_recurring = data.get('is_recurring', False)
@@ -241,7 +245,7 @@ def create_bill_split(current_user_id):
         db.session.add(bill_split)
         db.session.flush()
 
-        with db.session.no_autoflush:  # Prevent premature flush during user and group queries
+        with db.session.no_autoflush:
             for participant in participants:
                 user_id = participant.get('user_id')
                 paid_amount = float(participant.get('paid_amount', 0))
@@ -259,7 +263,7 @@ def create_bill_split(current_user_id):
                     share_amount=share_amount,
                     split_method=split_method,
                     split_value=split_value,
-                    status='pending'  # Explicitly set to match table default
+                    status='pending'
                 )
                 db.session.add(split_participant)
 
@@ -470,10 +474,11 @@ def delete_group(current_user_id, group_id):
             Settlement.query.filter_by(bill_split_id=bill_split.id).delete()
             db.session.delete(bill_split)
 
-        db.session.delete(group)
+        GroupMember.query.filter_by(group_id=group_id).delete()
+        group.deleted_at = datetime.utcnow()
         db.session.commit()
 
-        logger.info(f"Group deleted: id={group_id}, user_id={current_user_id}")
+        logger.info(f"Group soft-deleted: id={group_id}, user_id={current_user_id}, deleted_at={group.deleted_at}")
         return jsonify({"message": "Group deleted successfully"}), 200
     except Exception as e:
         db.session.rollback()
@@ -484,9 +489,9 @@ def delete_group(current_user_id, group_id):
 @user_required()
 def get_group(current_user_id, group_id):
     try:
-        group = Group.query.get(group_id)
+        group = Group.query.filter_by(id=group_id, deleted_at=None).first()
         if not group:
-            logger.warning(f"Group {group_id} not found")
+            logger.warning(f"Group {group_id} not found or soft-deleted")
             return jsonify({"error": "Group not found"}), 404
 
         is_member = GroupMember.query.filter_by(group_id=group_id, user_id=current_user_id).first()
@@ -510,7 +515,10 @@ def get_group(current_user_id, group_id):
 @user_required()
 def update_group(current_user_id, group_id):
     try:
-        group = Group.query.get_or_404(group_id)
+        group = Group.query.filter_by(id=group_id, deleted_at=None).first()
+        if not group:
+            logger.warning(f"Group {group_id} not found or soft-deleted")
+            return jsonify({"error": "Group not found"}), 404
         if group.creator_id != current_user_id:
             logger.warning(f"User {current_user_id} is not creator of group {group_id}")
             return jsonify({"error": "Only the group creator can edit the group"}), 403
