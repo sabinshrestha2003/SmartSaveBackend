@@ -154,7 +154,8 @@ def get_user_groups(current_user_id):
             GroupMember.user_id == current_user_id,
             Group.deleted_at.is_(None)
         ).all()
-        logger.debug(f"Fetched {len(groups)} groups for user_id: {current_user_id}")
+        group_ids = [group.id for group in groups]
+        logger.debug(f"Fetched {len(groups)} groups for user_id: {current_user_id}, group_ids: {group_ids}")
         return jsonify({"groups": [group.to_dict() for group in groups]}), 200
     except Exception as e:
         logger.error(f"Exception in get_user_groups: {str(e)}")
@@ -489,10 +490,14 @@ def delete_group(current_user_id, group_id):
 @user_required()
 def get_group(current_user_id, group_id):
     try:
-        group = Group.query.filter_by(id=group_id, deleted_at=None).first()
-        if not group:
+        group = Group.query.get(group_id)
+        if not group or group.deleted_at is not None:
             logger.warning(f"Group {group_id} not found or soft-deleted")
             return jsonify({"error": "Group not found"}), 404
+
+        if group.id != group_id:
+            logger.error(f"Group ID mismatch: requested {group_id}, but fetched {group.id}")
+            return jsonify({"error": "Group ID mismatch"}), 500
 
         is_member = GroupMember.query.filter_by(group_id=group_id, user_id=current_user_id).first()
         if not is_member and group.creator_id != current_user_id:
@@ -503,8 +508,7 @@ def get_group(current_user_id, group_id):
         
         group_dict = group.to_dict()
         group_dict['members'] = members
-
-        logger.debug(f"Fetched group {group_id} for user_id: {current_user_id}")
+        logger.debug(f"Fetched group {group_id} for user_id: {current_user_id}, group_dict: {group_dict}")
         return jsonify({"group": group_dict}), 200
     except Exception as e:
         db.session.rollback()
@@ -515,8 +519,8 @@ def get_group(current_user_id, group_id):
 @user_required()
 def update_group(current_user_id, group_id):
     try:
-        group = Group.query.filter_by(id=group_id, deleted_at=None).first()
-        if not group:
+        group = Group.query.get(group_id)
+        if not group or group.deleted_at is not None:
             logger.warning(f"Group {group_id} not found or soft-deleted")
             return jsonify({"error": "Group not found"}), 404
         if group.creator_id != current_user_id:
