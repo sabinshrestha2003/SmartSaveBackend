@@ -13,9 +13,9 @@ class Group(db.Model):
     created_at = db.Column(db.DateTime, nullable=True, default=datetime.utcnow)
     icon_url = db.Column(db.String(255), nullable=True)
 
-    members = db.relationship('GroupMember', backref='group', lazy=True)
+    members = db.relationship('GroupMember', backref='group', lazy=True, cascade='all, delete')
 
-    def __init__(self, id, name, creator_id, type='Custom', currency='INR', created_at=None, icon_url=None):
+    def __init__(self, id, name, creator_id, type='Custom', currency='USD', created_at=None, icon_url=None):
         self.id = id
         self.name = name
         self.creator_id = creator_id

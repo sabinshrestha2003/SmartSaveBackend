@@ -435,7 +435,6 @@ def delete_group(current_user_id, group_id):
         if group.creator_id != current_user_id:
             return jsonify({"error": "Only the group creator can delete the group"}), 403
 
-        GroupMember.query.filter_by(group_id=group_id).delete()
         bill_splits = BillSplit.query.filter_by(group_id=group_id).all()
         for bill_split in bill_splits:
             SplitParticipant.query.filter_by(bill_split_id=bill_split.id).delete()
@@ -458,15 +457,12 @@ def get_group(current_user_id, group_id):
         if not group:
             return jsonify({"error": "Group not found"}), 404
 
-        # Check if the user is a member or the creator
         is_member = GroupMember.query.filter_by(group_id=group_id, user_id=current_user_id).first()
         if not is_member and group.creator_id != current_user_id:
             return jsonify({"error": "You are not a member of this group"}), 403
 
-        # Fetch all members
         members = [gm.user_id for gm in GroupMember.query.filter_by(group_id=group_id).all()]
         
-        # Construct group dictionary
         group_dict = group.to_dict()
         group_dict['members'] = members
 
