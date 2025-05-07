@@ -159,6 +159,8 @@ def create_bill_split(current_user_id):
 
         group_id = data.get('group_id')
         category = data.get('category')
+        currency = data.get('currency', 'INR')  # Default to INR as per table
+        status = data.get('status', 'active')  # Default to active as per table
         photo_url = data.get('photo_url')
         notes = data.get('notes')
         is_recurring = data.get('is_recurring', False)
@@ -215,6 +217,8 @@ def create_bill_split(current_user_id):
             creator_id=current_user_id,
             group_id=group_id,
             category=category,
+            currency=currency,
+            status=status,
             photo_url=photo_url,
             notes=notes,
             is_recurring=is_recurring
@@ -326,6 +330,10 @@ def update_bill_split(current_user_id, bill_split_id):
             bill_split.group_id = data['group_id']
         if 'category' in data:
             bill_split.category = data['category']
+        if 'currency' in data:
+            bill_split.currency = data['currency']
+        if 'status' in data:
+            bill_split.status = data['status']
         if 'photo_url' in data:
             bill_split.photo_url = data['photo_url']
         if 'notes' in data:
