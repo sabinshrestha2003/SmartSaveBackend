@@ -408,6 +408,7 @@ def get_user_settlements(current_user_id):
 def create_settlement(current_user_id):
     try:
         data = request.get_json()
+        logger.debug(f"Creating settlement with data: {data}")
         payer_id = data.get('payer_id')
         payee_id = data.get('payee_id')
         amount = data.get('amount')
@@ -422,15 +423,11 @@ def create_settlement(current_user_id):
         if str(payer_id) != str(current_user_id):
             raise ValueError("You can only create settlements as the payer")
 
+        # Validation moved to Settlement model, but kept here for backward compatibility
         if not User.query.get(int(payer_id)):
             raise ValueError(f"Payer user with ID {payer_id} does not exist")
         if not User.query.get(int(payee_id)):
             raise ValueError(f"Payee user with ID {payee_id} does not exist")
-
-        if split_id:
-            bill_split = BillSplit.query.get(int(split_id))
-            if not bill_split:
-                raise ValueError(f"Bill split with ID {split_id} does not exist")
 
         settlement = Settlement(
             from_user_id=int(payer_id),
@@ -448,15 +445,15 @@ def create_settlement(current_user_id):
         settlement_dict['payer_id'] = settlement_dict.pop('from_user_id')
         settlement_dict['payee_id'] = settlement_dict.pop('to_user_id')
         settlement_dict['timestamp'] = timestamp
-        logger.info(f"Settlement created: id={settlement.id}, user_id={current_user_id}")
+        logger.info(f"Settlement created: id={settlement.id}, payer_id={payer_id}, payee_id={payee_id}, amount={amount}, user_id={current_user_id}")
         return jsonify({"message": "Settlement created", "settlement": settlement_dict}), 201
     except ValueError as ve:
         db.session.rollback()
-        logger.error(f"ValueError in create_settlement: {str(ve)}")
+        logger.error(f"ValueError in create_settlement: {str(ve)}, data: {data}")
         return jsonify({"error": str(ve)}), 400
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Exception in create_settlement: {str(e)}")
+        logger.error(f"Exception in create_settlement: {str(e)}, data: {data}")
         return jsonify({"error": f"Failed to create settlement: {str(e)}"}), 500
 
 @bill_split_bp.route('/groups/<int:group_id>', methods=['DELETE'], endpoint='delete_group')
